@@ -2,16 +2,12 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { MIN_RATING_TO_LIST } from "@/lib/sanitation";
 import { rupiah } from "@/lib/format";
+import { getLang } from "@/lib/i18n-server";
+import { translations } from "@/lib/i18n";
 
 export const metadata = { title: "Explore · DesaKu" };
 
 type Filter = "all" | "stay" | "experience";
-
-const FILTER_TABS: { key: Filter; label: string }[] = [
-  { key: "all",        label: "All" },
-  { key: "stay",       label: "🌙 Places to stay" },
-  { key: "experience", label: "☀️ Things to do" },
-];
 
 const CAT_LABELS: Record<string, string> = {
   music: "Music", craft: "Craft", culinary: "Culinary",
@@ -35,8 +31,15 @@ type ExperienceRow = {
 };
 
 export default async function ExplorePage({ searchParams }: Props) {
-  const { type = "all" } = await searchParams;
+  const [{ type = "all" }, lang] = await Promise.all([searchParams, getLang()]);
+  const t = translations[lang];
   const filter = (["all", "stay", "experience"].includes(type) ? type : "all") as Filter;
+
+  const FILTER_TABS: { key: Filter; label: string }[] = [
+    { key: "all",        label: t.explore.all },
+    { key: "stay",       label: t.explore.stay },
+    { key: "experience", label: t.explore.experience },
+  ];
 
   const supabase = await createSupabaseServerClient();
 
@@ -58,7 +61,6 @@ export default async function ExplorePage({ searchParams }: Props) {
     villages: { id: string; name: string; region: string | null; sanitation_rating: number } | null;
   })[];
 
-  // Filter experiences to only those from qualifying villages.
   const experiences = allExperiences.filter(
     (e) => (e.villages?.sanitation_rating ?? 0) >= MIN_RATING_TO_LIST,
   );
@@ -77,14 +79,13 @@ export default async function ExplorePage({ searchParams }: Props) {
     <div className="mx-auto max-w-6xl px-5 py-14">
       <header className="max-w-2xl">
         <span className="text-xs font-semibold uppercase tracking-[0.25em] text-clay">
-          Indonesia · Certified villages
+          {t.explore.badge}
         </span>
         <h1 className="mt-3 font-display text-5xl font-bold tracking-tight text-ink">
-          Where do you want to go?
+          {t.explore.headline}
         </h1>
         <p className="mt-4 text-lg text-ink/70">
-          Overnight homestays, day-trip experiences, or both. Every booking
-          shows the 50/30/20 split before you confirm.
+          {t.explore.sub}
         </p>
       </header>
 
@@ -104,13 +105,13 @@ export default async function ExplorePage({ searchParams }: Props) {
           </Link>
         ))}
         <span className="ml-auto self-center text-sm text-muted-foreground">
-          {totalCount} result{totalCount === 1 ? "" : "s"}
+          {t.explore.results(totalCount)}
         </span>
       </div>
 
       {totalCount === 0 && (
         <p className="mt-14 text-muted-foreground">
-          Nothing here yet. Onboard a village from the{" "}
+          {t.explore.empty}{" "}
           <Link href="/admin" className="underline">admin desk</Link>.
         </p>
       )}
@@ -120,7 +121,7 @@ export default async function ExplorePage({ searchParams }: Props) {
         <section className="mt-12">
           {filter === "all" && (
             <h2 className="mb-6 font-display text-2xl font-semibold text-ink">
-              Places to stay
+              {t.explore.staysSection}
             </h2>
           )}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -158,11 +159,11 @@ export default async function ExplorePage({ searchParams }: Props) {
                     )}
                     <div className="mt-auto flex items-end justify-between pt-4">
                       <span className="text-sm text-muted-foreground">
-                        {v.experiences.length} experience{v.experiences.length === 1 ? "" : "s"}
+                        {t.explore.expCount(v.experiences.length)}
                       </span>
                       {minPrice !== null && (
                         <span className="font-mono text-sm text-ink">
-                          from {rupiah(minPrice)}<span className="text-muted-foreground"> /night</span>
+                          {t.explore.fromPrice} {rupiah(minPrice)}<span className="text-muted-foreground">{t.explore.perNight}</span>
                         </span>
                       )}
                     </div>
@@ -179,7 +180,7 @@ export default async function ExplorePage({ searchParams }: Props) {
         <section className={stayVillages.length > 0 ? "mt-16" : "mt-12"}>
           {filter === "all" && (
             <h2 className="mb-6 font-display text-2xl font-semibold text-ink">
-              Things to do
+              {t.explore.expSection}
             </h2>
           )}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -208,7 +209,7 @@ export default async function ExplorePage({ searchParams }: Props) {
                     {e.villages?.region ?? ""}
                   </span>
                   <span className="font-mono text-sm text-ink">
-                    {rupiah(Number(e.price_per_pax))}<span className="text-muted-foreground"> /pax</span>
+                    {rupiah(Number(e.price_per_pax))}<span className="text-muted-foreground">{t.explore.perPax}</span>
                   </span>
                 </div>
               </Link>

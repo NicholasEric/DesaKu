@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { useT } from "@/components/lang-provider";
 
 function isoOffset(days: number) {
   const d = new Date();
@@ -21,10 +22,10 @@ function isoOffset(days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-const SPLIT_ROWS = [
-  { key: "host" as const, label: "Host family",      pct: REVENUE_SPLIT.host,   bg: "bg-palm" },
-  { key: "guide" as const, label: "Guide & artisans", pct: REVENUE_SPLIT.guide,  bg: "bg-clay" },
-  { key: "bumdes" as const, label: "Village fund",    pct: REVENUE_SPLIT.bumdes, bg: "bg-gold" },
+const SPLIT_KEYS = [
+  { key: "host"   as const, pct: REVENUE_SPLIT.host,   bg: "bg-palm" },
+  { key: "guide"  as const, pct: REVENUE_SPLIT.guide,  bg: "bg-clay" },
+  { key: "bumdes" as const, pct: REVENUE_SPLIT.bumdes, bg: "bg-gold" },
 ];
 
 type Mode = "stay" | "experience";
@@ -36,22 +37,23 @@ export function BookingPanel({
   homestays: BookingHomestay[];
   experiences: BookingExperience[];
 }) {
+  const t = useT();
   const router = useRouter();
 
   const hasStay = homestays.length > 0;
   const hasExp  = experiences.length > 0;
 
-  const [mode, setMode]           = useState<Mode>(hasStay ? "stay" : "experience");
-  const [homestayId, setHomestayId] = useState(homestays[0]?.id ?? "");
-  const [checkIn, setCheckIn]     = useState(isoOffset(7));
-  const [checkOut, setCheckOut]   = useState(isoOffset(9));
-  const [visitDate, setVisitDate] = useState(isoOffset(7));
-  const [guests, setGuests]       = useState(2);
+  const [mode, setMode]               = useState<Mode>(hasStay ? "stay" : "experience");
+  const [homestayId, setHomestayId]   = useState(homestays[0]?.id ?? "");
+  const [checkIn, setCheckIn]         = useState(isoOffset(7));
+  const [checkOut, setCheckOut]       = useState(isoOffset(9));
+  const [visitDate, setVisitDate]     = useState(isoOffset(7));
+  const [guests, setGuests]           = useState(2);
   const [selectedExp, setSelectedExp] = useState<string[]>([]);
-  const [guestName, setGuestName]   = useState("");
-  const [guestPhone, setGuestPhone] = useState("");
-  const [error, setError]         = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [guestName, setGuestName]     = useState("");
+  const [guestPhone, setGuestPhone]   = useState("");
+  const [error, setError]             = useState<string | null>(null);
+  const [pending, startTransition]    = useTransition();
 
   const homestay = homestays.find((h) => h.id === homestayId) ?? homestays[0];
   const nights = nightsBetween(checkIn, checkOut);
@@ -95,6 +97,12 @@ export function BookingPanel({
     });
   }
 
+  const SPLIT_ROWS = [
+    { key: "host"   as const, label: t.booking.host,   pct: REVENUE_SPLIT.host,   bg: "bg-palm" },
+    { key: "guide"  as const, label: t.booking.guide,  pct: REVENUE_SPLIT.guide,  bg: "bg-clay" },
+    { key: "bumdes" as const, label: t.booking.village, pct: REVENUE_SPLIT.bumdes, bg: "bg-gold" },
+  ];
+
   const canBook =
     guestName.trim().length > 0 &&
     (mode === "stay" ? nights >= 1 && !!homestay : selectedExp.length > 0) &&
@@ -103,7 +111,6 @@ export function BookingPanel({
   return (
     <div className="rounded-2xl border border-line bg-card p-6">
 
-      {/* Mode toggle — only shown when the village has both */}
       {hasStay && hasExp && (
         <div className="mb-5 flex overflow-hidden rounded-lg border border-line text-sm">
           {(["stay", "experience"] as Mode[]).map((m) => (
@@ -117,7 +124,7 @@ export function BookingPanel({
                   : "bg-transparent text-muted-foreground hover:text-ink"
               }`}
             >
-              {m === "stay" ? "🌙 Overnight stay" : "☀️ Day visit"}
+              {m === "stay" ? t.booking.overnight : t.booking.dayVisit}
             </button>
           ))}
         </div>
@@ -130,12 +137,12 @@ export function BookingPanel({
             <span className="font-mono text-2xl text-ink">
               {homestay ? rupiah(Number(homestay.price_per_night)) : "—"}
             </span>
-            <span className="text-sm text-muted-foreground">per night</span>
+            <span className="text-sm text-muted-foreground">{t.booking.perNight}</span>
           </div>
 
           {homestays.length > 1 && (
             <div className="mt-4 space-y-2">
-              <Label className="text-ink">Homestay</Label>
+              <Label className="text-ink">{t.booking.homestay}</Label>
               {homestays.map((h, i) => (
                 <button
                   key={h.id}
@@ -147,7 +154,7 @@ export function BookingPanel({
                 >
                   <span className="text-ink">
                     Homestay {i + 1}
-                    <span className="text-muted-foreground"> · up to {h.max_guests ?? "—"} guests</span>
+                    <span className="text-muted-foreground"> · {t.booking.upTo} {h.max_guests ?? "—"} {t.booking.guestsUnit}</span>
                   </span>
                   <span className="font-mono text-ink">{rupiah(Number(h.price_per_night))}</span>
                 </button>
@@ -157,12 +164,12 @@ export function BookingPanel({
 
           <div className="mt-5 grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="checkin" className="text-ink">Check-in</Label>
+              <Label htmlFor="checkin" className="text-ink">{t.booking.checkin}</Label>
               <Input id="checkin" type="date" value={checkIn} min={isoOffset(0)}
                 onChange={(e) => setCheckIn(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="checkout" className="text-ink">Check-out</Label>
+              <Label htmlFor="checkout" className="text-ink">{t.booking.checkout}</Label>
               <Input id="checkout" type="date" value={checkOut} min={checkIn}
                 onChange={(e) => setCheckOut(e.target.value)} />
             </div>
@@ -173,16 +180,15 @@ export function BookingPanel({
       {/* ── EXPERIENCE mode ───────────────────────────────────── */}
       {mode === "experience" && (
         <div className="mt-1 space-y-1.5">
-          <Label htmlFor="visitdate" className="text-ink">Visit date</Label>
+          <Label htmlFor="visitdate" className="text-ink">{t.booking.visitDate}</Label>
           <Input id="visitdate" type="date" value={visitDate} min={isoOffset(0)}
             onChange={(e) => setVisitDate(e.target.value)} />
         </div>
       )}
 
-      {/* Guests / pax — shared */}
       <div className="mt-3 space-y-1.5">
         <Label htmlFor="guests" className="text-ink">
-          {mode === "experience" ? "Number of people" : "Guests"}
+          {mode === "experience" ? t.booking.pax : t.booking.guests}
         </Label>
         <Input
           id="guests" type="number" min={1}
@@ -192,11 +198,10 @@ export function BookingPanel({
         />
       </div>
 
-      {/* Experiences (add-ons for stay, required for day visit) */}
       {hasExp && (
         <div className="mt-5">
           <Label className="text-ink">
-            {mode === "stay" ? "Add experiences" : "Choose experiences"}
+            {mode === "stay" ? t.booking.addExp : t.booking.chooseExp}
           </Label>
           <div className="mt-2 space-y-2">
             {experiences.map((e) => (
@@ -225,45 +230,42 @@ export function BookingPanel({
         </div>
       )}
 
-      {/* Guest details */}
       <div className="mt-5 grid gap-3">
         <div className="space-y-1.5">
-          <Label htmlFor="name" className="text-ink">Your name</Label>
+          <Label htmlFor="name" className="text-ink">{t.booking.name}</Label>
           <Input id="name" value={guestName} onChange={(e) => setGuestName(e.target.value)}
             placeholder="Sarah Tan" />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="phone" className="text-ink">WhatsApp / phone</Label>
+          <Label htmlFor="phone" className="text-ink">{t.booking.phone}</Label>
           <PhoneInput id="phone" value={guestPhone} onChange={setGuestPhone} placeholder="8123 4567" />
         </div>
       </div>
 
-      {/* Price summary */}
       <dl className="mt-6 space-y-1.5 border-t border-line pt-4 text-sm">
         {mode === "stay" && lodging > 0 && (
           <div className="flex justify-between text-ink/80">
-            <dt>{rupiah(Number(homestay?.price_per_night))} × {nights} night{nights === 1 ? "" : "s"}</dt>
+            <dt>{rupiah(Number(homestay?.price_per_night))} × {t.booking.nights(nights)}</dt>
             <dd className="font-mono">{rupiah(lodging)}</dd>
           </div>
         )}
         {experiencesTotal > 0 && (
           <div className="flex justify-between text-ink/80">
-            <dt>Experiences × {guests} pax</dt>
+            <dt>{t.booking.expXPax(guests)}</dt>
             <dd className="font-mono">{rupiah(experiencesTotal)}</dd>
           </div>
         )}
         <div className="flex justify-between border-t border-line pt-2 font-semibold text-ink">
-          <dt>Total</dt>
+          <dt>{t.booking.total}</dt>
           <dd className="font-mono">{rupiah(total)}</dd>
         </div>
       </dl>
 
-      {/* Live 50/30/20 split */}
       {total > 0 && (
         <div className="mt-5 rounded-lg bg-ink p-4 text-paper">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gold">Where it goes</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gold">{t.booking.whereItGoes}</p>
           <div className="mt-3 flex h-2 overflow-hidden rounded-full">
-            {SPLIT_ROWS.map((r) => (
+            {SPLIT_KEYS.map((r) => (
               <div key={r.key} style={{ width: `${r.pct * 100}%` }} className={r.bg} />
             ))}
           </div>
@@ -285,10 +287,10 @@ export function BookingPanel({
 
       <Button onClick={submit} disabled={!canBook || pending} size="lg"
         className="mt-5 w-full rounded-full bg-clay text-base text-paper hover:bg-clay/90">
-        {pending ? "Reserving…" : "Reserve (mock payment)"}
+        {pending ? t.booking.reserving : t.booking.reserve}
       </Button>
       <p className="mt-2 text-center text-xs text-muted-foreground">
-        No charge yet. The host or guide confirms on WhatsApp.
+        {t.booking.noCharge}
       </p>
     </div>
   );

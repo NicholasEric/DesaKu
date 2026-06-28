@@ -1,33 +1,13 @@
+"use client";
+
+import { useT } from "@/components/lang-provider";
+
 const EXAMPLE_TOTAL = 1_000_000;
 
-const SPLIT = [
-  {
-    pct: 50,
-    key: "host",
-    label: "Host family",
-    bg: "bg-palm",
-    text: "text-paper",
-    blurb:
-      "The family that gives up a room, cooks your meals, and walks you to the rice fields at dawn.",
-  },
-  {
-    pct: 30,
-    key: "guide",
-    label: "Guide & artisans",
-    bg: "bg-clay",
-    text: "text-paper",
-    blurb:
-      "Whoever leads the trek, teaches the batik, or plays the angklung — paid as a professional, not a prop.",
-  },
-  {
-    pct: 20,
-    key: "bumdes",
-    label: "Village fund",
-    bg: "bg-gold",
-    text: "text-palm-deep",
-    blurb:
-      "The communal treasury (BUMDes): clean water, repaired paths, scholarships the whole village votes on.",
-  },
+const SPLIT_META = [
+  { pct: 50, key: "host"   as const, bg: "bg-palm", text: "text-paper" },
+  { pct: 30, key: "guide"  as const, bg: "bg-clay", text: "text-paper" },
+  { pct: 20, key: "bumdes" as const, bg: "bg-gold",  text: "text-palm-deep" },
 ] as const;
 
 function rupiah(n: number) {
@@ -35,31 +15,38 @@ function rupiah(n: number) {
 }
 
 export function ImpactModel() {
+  const t = useT();
+
+  const SPLIT = [
+    { ...SPLIT_META[0], label: t.impact.host,   blurb: t.impact.hostBlurb },
+    { ...SPLIT_META[1], label: t.impact.guide,  blurb: t.impact.guideBlurb },
+    { ...SPLIT_META[2], label: t.impact.village, blurb: t.impact.villageBlurb },
+  ];
+
+  const [headline, ...rest] = t.impact.headline.split("\n");
+
   return (
     <section id="impact" className="bg-ink py-24 text-paper">
       <div className="mx-auto max-w-6xl px-5">
         <div className="grid gap-10 md:grid-cols-[1fr_1.1fr] md:items-end">
           <div>
             <span className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">
-              The split, before you book
+              {t.impact.eyebrow}
             </span>
             <h2 className="mt-4 font-display text-4xl font-bold leading-[1.05] tracking-tight text-paper sm:text-5xl">
-              Every rupiah,
-              <br />
-              accounted for.
+              {headline}
+              {rest.length > 0 && <><br />{rest.join("\n")}</>}
             </h2>
           </div>
           <p className="text-lg leading-relaxed text-paper/70">
-            Most platforms take a cut and stay quiet about the rest. We publish
-            the math on every booking. No middleman markup, no mystery fees —
-            three recipients, one honest bar.
+            {t.impact.sub}
           </p>
         </div>
 
         {/* Proportional split bar */}
         <div className="mt-14">
           <div className="flex items-center justify-between text-sm text-paper/60">
-            <span>Example: 2 nights + a batik workshop</span>
+            <span>{t.impact.example}</span>
             <span className="font-mono text-paper">{rupiah(EXAMPLE_TOTAL)}</span>
           </div>
 

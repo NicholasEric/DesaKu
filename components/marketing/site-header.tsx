@@ -1,14 +1,19 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-
-const NAV = [
-  { label: "The split", href: "#impact" },
-  { label: "Experiences", href: "#experiences" },
-  { label: "Curation", href: "#curation" },
-  { label: "For villages", href: "#villages" },
-];
+import { LangToggle } from "@/components/marketing/lang-toggle";
+import { useT } from "@/components/lang-provider";
 
 export function SiteHeader() {
+  const t = useT();
+  const NAV = [
+    { label: t.nav.split,       href: "#impact" },
+    { label: t.nav.experiences, href: "#experiences" },
+    { label: t.nav.curation,    href: "#curation" },
+    { label: t.nav.forVillages, href: "#villages" },
+  ];
+
   return (
     <header className="sticky top-0 z-50 border-b border-line/70 bg-paper/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
@@ -34,15 +39,12 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
-          {/* Language switcher is wired up in Step 6 (EN / ID / 日本語) */}
-          <span className="hidden text-xs font-semibold tracking-wide text-muted-foreground sm:inline">
-            EN
-          </span>
+          <LangToggle variant="header" />
           <Button
             asChild
             className="rounded-full bg-palm px-5 text-paper hover:bg-palm-deep"
           >
-            <Link href="/villages">Find a village</Link>
+            <Link href="/villages">{t.nav.findVillage}</Link>
           </Button>
         </div>
       </div>

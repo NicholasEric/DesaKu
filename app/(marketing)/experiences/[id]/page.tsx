@@ -4,6 +4,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { rupiah } from "@/lib/format";
 import { ReviewList } from "@/components/booking/review-list";
 import { ExperienceBookingPanel } from "@/components/booking/experience-booking-panel";
+import { getLang } from "@/lib/i18n-server";
+import { translations } from "@/lib/i18n";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -13,7 +15,8 @@ type Review = {
 };
 
 export default async function ExperienceDetailPage({ params }: Params) {
-  const { id } = await params;
+  const [{ id }, lang] = await Promise.all([params, getLang()]);
+  const t = translations[lang];
   const supabase = await createSupabaseServerClient();
 
   const { data } = await supabase
@@ -79,7 +82,7 @@ export default async function ExperienceDetailPage({ params }: Params) {
           </h1>
           <div className="mt-3 flex items-baseline gap-3">
             <span className="font-mono text-2xl text-paper">{rupiah(Number(exp.price_per_pax))}</span>
-            <span className="text-paper/70">per person</span>
+            <span className="text-paper/70">{t.booking.perPax}</span>
             {avgRating !== null && (
               <span className="ml-2 text-gold text-sm">
                 ★ {avgRating.toFixed(1)} ({reviews.length})
@@ -102,7 +105,7 @@ export default async function ExperienceDetailPage({ params }: Params) {
             <div className="mt-10 flex items-center gap-4 rounded-xl border border-line bg-card p-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Part of
+                  {t.expDetail.partOf}
                 </p>
                 <Link href={`/villages/${village.id}`}
                   className="font-display text-xl font-semibold text-ink hover:text-clay">
@@ -116,11 +119,10 @@ export default async function ExperienceDetailPage({ params }: Params) {
             </div>
           )}
 
-          {/* Reviews */}
           <section className="mt-12">
-            <h2 className="font-display text-2xl font-semibold text-ink">Reviews</h2>
+            <h2 className="font-display text-2xl font-semibold text-ink">{t.expDetail.reviews}</h2>
             <div className="mt-5">
-              <ReviewList reviews={reviews} avgRating={avgRating} />
+              <ReviewList reviews={reviews} avgRating={avgRating} noReviewsText={t.village.noReviews} />
             </div>
           </section>
         </div>

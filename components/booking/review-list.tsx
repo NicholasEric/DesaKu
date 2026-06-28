@@ -18,14 +18,16 @@ function Stars({ n }: { n: number }) {
 export function ReviewList({
   reviews,
   avgRating,
+  noReviewsText = "No reviews yet. Book a stay and be the first.",
 }: {
   reviews: Review[];
   avgRating: number | null;
+  noReviewsText?: string;
 }) {
   if (reviews.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No reviews yet. Book a stay and be the first.
+        {noReviewsText}
       </p>
     );
   }

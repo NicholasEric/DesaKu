@@ -3,11 +3,14 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { BookingPanel } from "@/components/booking/booking-panel";
 import { ReviewList } from "@/components/booking/review-list";
 import { rupiah } from "@/lib/format";
+import { getLang } from "@/lib/i18n-server";
+import { translations } from "@/lib/i18n";
 
 type Params = { params: Promise<{ id: string }> };
 
 export default async function VillageDetailPage({ params }: Params) {
-  const { id } = await params;
+  const [{ id }, lang] = await Promise.all([params, getLang()]);
+  const t = translations[lang];
   const supabase = await createSupabaseServerClient();
 
   const { data: villageData } = await supabase
@@ -78,11 +81,11 @@ export default async function VillageDetailPage({ params }: Params) {
 
           <section className="mt-12">
             <h2 className="font-display text-2xl font-semibold text-ink">
-              What you can do here
+              {t.village.whatToDo}
             </h2>
             {experiences.length === 0 ? (
               <p className="mt-4 text-muted-foreground">
-                No experiences listed yet — the homestay alone is bookable.
+                {t.village.noExp}
               </p>
             ) : (
               <ul className="mt-5 divide-y divide-line border-y border-line">
@@ -107,7 +110,7 @@ export default async function VillageDetailPage({ params }: Params) {
                     </div>
                     <span className="shrink-0 font-mono text-sm text-ink">
                       {rupiah(Number(e.price_per_pax))}
-                      <span className="text-muted-foreground"> /pax</span>
+                      <span className="text-muted-foreground">{t.explore.perPax}</span>
                     </span>
                   </li>
                 ))}
@@ -117,9 +120,9 @@ export default async function VillageDetailPage({ params }: Params) {
 
           {/* Homestay reviews */}
           <section className="mt-12">
-            <h2 className="font-display text-2xl font-semibold text-ink">Reviews</h2>
+            <h2 className="font-display text-2xl font-semibold text-ink">{t.village.reviews}</h2>
             <div className="mt-5">
-              <ReviewList reviews={reviews} avgRating={avgRating} />
+              <ReviewList reviews={reviews} avgRating={avgRating} noReviewsText={t.village.noReviews} />
             </div>
           </section>
         </div>
@@ -128,7 +131,7 @@ export default async function VillageDetailPage({ params }: Params) {
         <div className="lg:sticky lg:top-24 lg:self-start">
           {homestays.length === 0 ? (
             <div className="rounded-xl border border-line bg-card p-6 text-muted-foreground">
-              No homestays are available in this village yet.
+              {t.village.noHomestay}
             </div>
           ) : (
             <BookingPanel homestays={homestays} experiences={experiences} />

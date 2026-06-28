@@ -1,25 +1,22 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ImpactModel } from "@/components/marketing/impact-model";
+import { getLang } from "@/lib/i18n-server";
+import { translations } from "@/lib/i18n";
 
 const EXPERIENCES = [
-  { n: "01", title: "Homestay with a coffee-farming family", cat: "Stay", place: "Kintamani, Bali" },
-  { n: "02", title: "Angklung & gamelan evening", cat: "Music", place: "Cijahe, West Java" },
-  { n: "03", title: "Batik tulis, drawn from scratch", cat: "Craft", place: "Giriloyo, Yogyakarta" },
-  { n: "04", title: "Sunrise walk across the rice terraces", cat: "Nature", place: "Jatiluwih, Bali" },
-  { n: "05", title: "Clay-pot cooking over a wood fire", cat: "Culinary", place: "Penglipuran, Bali" },
-  { n: "06", title: "Hand-weaving ikat on a back-strap loom", cat: "Craft", place: "Sade, Lombok" },
+  { n: "01", title: "Homestay with a coffee-farming family", cat: "Stay",     place: "Kintamani, Bali" },
+  { n: "02", title: "Angklung & gamelan evening",            cat: "Music",    place: "Cijahe, West Java" },
+  { n: "03", title: "Batik tulis, drawn from scratch",       cat: "Craft",    place: "Giriloyo, Yogyakarta" },
+  { n: "04", title: "Sunrise walk across the rice terraces", cat: "Nature",   place: "Jatiluwih, Bali" },
+  { n: "05", title: "Clay-pot cooking over a wood fire",     cat: "Culinary", place: "Penglipuran, Bali" },
+  { n: "06", title: "Hand-weaving ikat on a back-strap loom",cat: "Craft",    place: "Sade, Lombok" },
 ];
 
-const CHECKLIST = [
-  "Private, working flush or clean squat toilet",
-  "Safe drinking water on site",
-  "A real bed, fresh linen, a lockable door",
-  "Kitchen hygiene the inspector would eat from",
-  "A lit, walkable path after dark",
-];
+export default async function MarketingPage() {
+  const lang = await getLang();
+  const t = translations[lang];
 
-export default function MarketingPage() {
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────── */}
@@ -28,15 +25,13 @@ export default function MarketingPage() {
           <div>
             <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-clay">
               <span className="h-px w-8 bg-clay" />
-              Certified villages · Indonesia
+              {t.hero.badge}
             </span>
             <h1 className="mt-6 font-display text-5xl font-bold leading-[0.98] tracking-[-0.03em] text-ink sm:text-6xl lg:text-7xl">
-              Sleep where the rooster is the alarm clock.
+              {t.hero.headline}
             </h1>
             <p className="mt-6 max-w-md text-lg leading-relaxed text-ink/70">
-              Real homestays, real artisans, real villages — booked in a few
-              taps. Half of what you pay goes straight to the family that hosts
-              you, and you can see exactly where the rest lands.
+              {t.hero.sub}
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <Button
@@ -44,7 +39,7 @@ export default function MarketingPage() {
                 size="lg"
                 className="rounded-full bg-clay px-7 text-base text-paper hover:bg-clay/90"
               >
-                <Link href="/villages">Find a village</Link>
+                <Link href="/villages">{t.hero.cta}</Link>
               </Button>
               <Button
                 asChild
@@ -52,16 +47,12 @@ export default function MarketingPage() {
                 variant="outline"
                 className="rounded-full border-ink/20 bg-transparent px-7 text-base text-ink hover:bg-ink hover:text-paper"
               >
-                <a href="#villages">List your village</a>
+                <a href="#villages">{t.hero.listCta}</a>
               </Button>
             </div>
 
             <dl className="mt-12 flex gap-10 border-t border-line pt-6">
-              {[
-                ["38", "villages"],
-                ["6", "provinces"],
-                ["100%", "transparent split"],
-              ].map(([num, label]) => (
+              {t.hero.stats.map(([num, label]) => (
                 <div key={label}>
                   <dt className="font-display text-3xl font-bold text-palm">{num}</dt>
                   <dd className="text-sm text-muted-foreground">{label}</dd>
@@ -122,15 +113,13 @@ export default function MarketingPage() {
         <div className="mx-auto max-w-6xl px-5">
           <div className="max-w-2xl">
             <span className="text-xs font-semibold uppercase tracking-[0.25em] text-clay">
-              More than a bed
+              {t.expSection.eyebrow}
             </span>
             <h2 className="mt-4 font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">
-              A village is a workshop, a kitchen, a stage.
+              {t.expSection.headline}
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-ink/70">
-              You are not just renting a room. You learn the batik, you sit in on
-              the gamelan, you walk the terraces at first light. Each experience
-              has its own guide — and its own line in the split.
+              {t.expSection.sub}
             </p>
           </div>
 
@@ -161,20 +150,18 @@ export default function MarketingPage() {
         <div className="mx-auto grid max-w-6xl gap-14 px-5 md:grid-cols-[1fr_1fr] md:items-center">
           <div>
             <span className="text-xs font-semibold uppercase tracking-[0.25em] text-clay">
-              Curation, not vibes
+              {t.curation.eyebrow}
             </span>
             <h2 className="mt-4 font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">
-              We check the toilets. Honestly.
+              {t.curation.headline}
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-ink/70">
-              Every village earns a sanitation and comfort rating from 1 to 5
-              before it ever appears here. No village pays to be listed, and none
-              gets a pass for being charming. Comfort is a right, not an upsell.
+              {t.curation.sub}
             </p>
           </div>
 
           <ul className="space-y-3">
-            {CHECKLIST.map((item) => (
+            {t.curation.checklist.map((item) => (
               <li
                 key={item}
                 className="flex items-center gap-4 rounded-md border border-line bg-card px-5 py-4"
@@ -186,9 +173,9 @@ export default function MarketingPage() {
               </li>
             ))}
             <li className="flex items-center justify-between px-5 pt-2">
-              <span className="text-sm text-muted-foreground">Minimum to list</span>
+              <span className="text-sm text-muted-foreground">{t.curation.minLabel}</span>
               <span className="font-display text-lg font-semibold text-palm">
-                Rated 4 / 5 or better
+                {t.curation.minValue}
               </span>
             </li>
           </ul>
@@ -224,16 +211,13 @@ export default function MarketingPage() {
 
           <div className="order-1 md:order-2">
             <span className="text-xs font-semibold uppercase tracking-[0.25em] text-clay">
-              The Village Concierge
+              {t.concierge.eyebrow}
             </span>
             <h2 className="mt-4 font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">
-              No dashboard for grandma.
+              {t.concierge.headline}
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-ink/70">
-              Hosts don't log in. The moment a booking is confirmed, DesaKu sends
-              a plain-language WhatsApp message in Bahasa Indonesia — who's
-              coming, when, and what they booked. The tech stays on our side of
-              the fence.
+              {t.concierge.sub}
             </p>
           </div>
         </div>
@@ -246,14 +230,13 @@ export default function MarketingPage() {
           <div className="flex flex-col justify-between rounded-xl bg-palm p-10 text-paper md:col-span-3 md:p-12">
             <div>
               <span className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">
-                For travelers
+                {t.cta.travelers}
               </span>
               <h3 className="mt-4 font-display text-4xl font-bold leading-tight tracking-tight">
-                Find a village that keeps what you pay.
+                {t.cta.travelersHeadline}
               </h3>
               <p className="mt-4 max-w-md text-paper/75">
-                Browse certified villages, pick your homestay and experiences,
-                and watch the split before you confirm.
+                {t.cta.travelersSub}
               </p>
             </div>
             <Button
@@ -261,7 +244,7 @@ export default function MarketingPage() {
               size="lg"
               className="mt-10 w-fit rounded-full bg-gold px-7 text-base text-palm-deep hover:bg-gold/90"
             >
-              <a href="#experiences">Start exploring</a>
+              <Link href="/villages">{t.cta.travelersBtn}</Link>
             </Button>
           </div>
 
@@ -272,14 +255,13 @@ export default function MarketingPage() {
           >
             <div>
               <span className="text-xs font-semibold uppercase tracking-[0.25em] text-paper/80">
-                For villages
+                {t.cta.villages}
               </span>
               <h3 className="mt-4 font-display text-3xl font-bold leading-tight tracking-tight">
-                List your homestay.
+                {t.cta.villagesHeadline}
               </h3>
               <p className="mt-4 text-paper/80">
-                Pass the curation check, set your price, and get bookings on
-                WhatsApp. No fees to join.
+                {t.cta.villagesSub}
               </p>
             </div>
             <Button
@@ -288,7 +270,7 @@ export default function MarketingPage() {
               variant="outline"
               className="mt-10 w-fit rounded-full border-paper/40 bg-transparent px-7 text-base text-paper hover:bg-paper hover:text-clay"
             >
-              <a href="#villages">Apply to join</a>
+              <a href="#villages">{t.cta.villagesBtn}</a>
             </Button>
           </div>
         </div>
