@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ConfirmBookingButton } from "@/components/dashboard/confirm-booking-button";
+import { MarkCompleteButton } from "@/components/dashboard/mark-complete-button";
 import { rupiah, nightsBetween } from "@/lib/format";
 
 export const metadata = { title: "Bookings · DesaKu Admin" };
@@ -133,7 +134,10 @@ export default async function AdminBookingsPage() {
                   {b.status === "pending" && (
                     <ConfirmBookingButton bookingId={b.id} />
                   )}
-                  {b.status !== "pending" && (
+                  {b.status === "confirmed" && (
+                    <MarkCompleteButton bookingId={b.id} />
+                  )}
+                  {(b.status === "completed" || b.status === "cancelled") && (
                     <span className="text-xs text-muted-foreground">
                       {logs.length} msg{logs.length === 1 ? "" : "s"} sent
                     </span>

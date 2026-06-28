@@ -32,6 +32,11 @@ export type GuideContext = BookingContext & {
   experienceTitle: string;
 };
 
+export type GuestContext = BookingContext & {
+  guestPhone: string;
+  bookingId: string;
+};
+
 /** Host arrival notification — sent in Bahasa Indonesia. */
 export function buildHostMessage(ctx: HostContext): WhatsAppPayload {
   return {
@@ -67,6 +72,25 @@ Mohon siapkan sesi terbaik untuk tamu.
 Terima kasih 🙏
 
 — DesaKu Concierge`,
+  };
+}
+
+/** Booking confirmation sent to the tourist in English. */
+export function buildGuestMessage(ctx: GuestContext): WhatsAppPayload {
+  return {
+    target_phone_number: ctx.guestPhone,
+    message_template: "guest_confirmation",
+    message_body: `Hi ${ctx.guestName}! Your DesaKu booking is confirmed 🌿
+
+Village: ${ctx.villageName}
+${ctx.nights > 0 ? `Check-in: ${formatDate(ctx.checkIn)}\nCheck-out: ${formatDate(ctx.checkOut)} (${ctx.nights} night${ctx.nights === 1 ? "" : "s"})` : `Visit date: ${formatDate(ctx.checkIn)}`}
+
+The local host will be in touch to share directions and details. Your 50/30/20 payment split goes directly to the host family, guides, and village fund.
+
+Selamat datang! 🙏
+
+— DesaKu Concierge
+Booking ref: ${ctx.bookingId.slice(0, 8).toUpperCase()}`,
   };
 }
 

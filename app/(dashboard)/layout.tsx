@@ -33,6 +33,12 @@ export default async function DashboardLayout({
               Onboard
             </Link>
             <Link
+              href="/admin/villages"
+              className="text-sm text-paper/70 transition-colors hover:text-gold"
+            >
+              Villages
+            </Link>
+            <Link
               href="/admin/bookings"
               className="text-sm text-paper/70 transition-colors hover:text-gold"
             >

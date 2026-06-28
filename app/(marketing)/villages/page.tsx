@@ -3,118 +3,219 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { MIN_RATING_TO_LIST } from "@/lib/sanitation";
 import { rupiah } from "@/lib/format";
 
-export const metadata = {
-  title: "Certified villages · DesaKu",
+export const metadata = { title: "Explore · DesaKu" };
+
+type Filter = "all" | "stay" | "experience";
+
+const FILTER_TABS: { key: Filter; label: string }[] = [
+  { key: "all",        label: "All" },
+  { key: "stay",       label: "🌙 Places to stay" },
+  { key: "experience", label: "☀️ Things to do" },
+];
+
+const CAT_LABELS: Record<string, string> = {
+  music: "Music", craft: "Craft", culinary: "Culinary",
+  nature: "Nature", agriculture: "Agriculture", ritual: "Ritual",
 };
 
+type Props = { searchParams: Promise<{ type?: string }> };
+
 type VillageRow = {
-  id: string;
-  name: string;
-  region: string | null;
-  description: string | null;
-  hero_image_url: string | null;
+  id: string; name: string; region: string | null;
+  description: string | null; hero_image_url: string | null;
   sanitation_rating: number | null;
-  homestays: { price_per_night: number }[];
+  homestays: { id: string; price_per_night: number }[];
   experiences: { id: string }[];
 };
 
-export default async function VillagesPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("villages")
-    .select(
-      "id, name, region, description, hero_image_url, sanitation_rating, homestays(price_per_night), experiences(id)",
-    )
-    .gte("sanitation_rating", MIN_RATING_TO_LIST)
-    .order("created_at", { ascending: false });
+type ExperienceRow = {
+  id: string; title: string; description: string | null;
+  category: string | null; price_per_pax: number; village_id: string;
+  villages: { id: string; name: string; region: string | null } | null;
+};
 
-  const villages = (data ?? []) as VillageRow[];
+export default async function ExplorePage({ searchParams }: Props) {
+  const { type = "all" } = await searchParams;
+  const filter = (["all", "stay", "experience"].includes(type) ? type : "all") as Filter;
+
+  const supabase = await createSupabaseServerClient();
+
+  const [villagesRes, experiencesRes] = await Promise.all([
+    supabase
+      .from("villages")
+      .select("id, name, region, description, hero_image_url, sanitation_rating, homestays(id, price_per_night), experiences(id)")
+      .gte("sanitation_rating", MIN_RATING_TO_LIST)
+      .order("created_at", { ascending: false }),
+
+    supabase
+      .from("experiences")
+      .select("id, title, description, category, price_per_pax, village_id, villages(id, name, region, sanitation_rating)")
+      .order("created_at", { ascending: false }),
+  ]);
+
+  const allVillages = (villagesRes.data ?? []) as unknown as VillageRow[];
+  const allExperiences = (experiencesRes.data ?? []) as unknown as (ExperienceRow & {
+    villages: { id: string; name: string; region: string | null; sanitation_rating: number } | null;
+  })[];
+
+  // Filter experiences to only those from qualifying villages.
+  const experiences = allExperiences.filter(
+    (e) => (e.villages?.sanitation_rating ?? 0) >= MIN_RATING_TO_LIST,
+  );
+
+  const showStays = filter === "all" || filter === "stay";
+  const showExperiences = filter === "all" || filter === "experience";
+
+  const stayVillages = showStays
+    ? allVillages.filter((v) => v.homestays.length > 0)
+    : [];
+  const expList = showExperiences ? experiences : [];
+
+  const totalCount = stayVillages.length + expList.length;
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-16">
+    <div className="mx-auto max-w-6xl px-5 py-14">
       <header className="max-w-2xl">
         <span className="text-xs font-semibold uppercase tracking-[0.25em] text-clay">
-          Certified villages
+          Indonesia · Certified villages
         </span>
         <h1 className="mt-3 font-display text-5xl font-bold tracking-tight text-ink">
-          Pick a village.
+          Where do you want to go?
         </h1>
         <p className="mt-4 text-lg text-ink/70">
-          Every village here cleared the {MIN_RATING_TO_LIST}/5 sanitation bar.
-          Choose a homestay, add the experiences you want, and you'll see the
-          full split before you commit.
+          Overnight homestays, day-trip experiences, or both. Every booking
+          shows the 50/30/20 split before you confirm.
         </p>
       </header>
 
-      {error && (
-        <p className="mt-10 rounded-md border border-clay/40 bg-clay/10 px-4 py-3 text-sm text-clay">
-          Couldn't load villages: {error.message}
-        </p>
-      )}
-
-      {!error && villages.length === 0 && (
-        <p className="mt-10 text-muted-foreground">
-          No villages are live yet. Onboard one from the admin desk.
-        </p>
-      )}
-
-      <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {villages.map((v) => {
-          const prices = v.homestays.map((h) => Number(h.price_per_night));
-          const minPrice = prices.length ? Math.min(...prices) : null;
-          return (
-            <Link
-              key={v.id}
-              href={`/villages/${v.id}`}
-              className="group flex flex-col overflow-hidden rounded-xl border border-line bg-card transition-colors hover:border-clay"
-            >
-              <div
-                className="relative aspect-[4/3] bg-palm"
-                style={
-                  v.hero_image_url
-                    ? {
-                        backgroundImage: `url(${v.hero_image_url})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : undefined
-                }
-              >
-                <span className="absolute right-3 top-3 rounded-full bg-gold px-2.5 py-1 text-xs font-semibold text-palm-deep">
-                  ★ {v.sanitation_rating}/5
-                </span>
-              </div>
-              <div className="flex flex-1 flex-col p-5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <h2 className="font-display text-xl font-semibold text-ink group-hover:text-clay">
-                    {v.name}
-                  </h2>
-                </div>
-                {v.region && (
-                  <p className="text-sm text-muted-foreground">{v.region}</p>
-                )}
-                {v.description && (
-                  <p className="mt-3 line-clamp-2 text-sm text-ink/70">
-                    {v.description}
-                  </p>
-                )}
-                <div className="mt-auto flex items-end justify-between pt-5">
-                  <span className="text-sm text-muted-foreground">
-                    {v.experiences.length} experience
-                    {v.experiences.length === 1 ? "" : "s"}
-                  </span>
-                  {minPrice !== null && (
-                    <span className="font-mono text-sm text-ink">
-                      from {rupiah(minPrice)}
-                      <span className="text-muted-foreground"> /night</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-            </Link>
-          );
-        })}
+      {/* Filter tabs */}
+      <div className="mt-10 flex flex-wrap gap-2">
+        {FILTER_TABS.map((tab) => (
+          <Link
+            key={tab.key}
+            href={`/villages?type=${tab.key}`}
+            className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+              filter === tab.key
+                ? "border-ink bg-ink text-paper"
+                : "border-line bg-card text-ink hover:border-ink/40"
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+        <span className="ml-auto self-center text-sm text-muted-foreground">
+          {totalCount} result{totalCount === 1 ? "" : "s"}
+        </span>
       </div>
+
+      {totalCount === 0 && (
+        <p className="mt-14 text-muted-foreground">
+          Nothing here yet. Onboard a village from the{" "}
+          <Link href="/admin" className="underline">admin desk</Link>.
+        </p>
+      )}
+
+      {/* ── Stays ──────────────────────────────────────────────────── */}
+      {stayVillages.length > 0 && (
+        <section className="mt-12">
+          {filter === "all" && (
+            <h2 className="mb-6 font-display text-2xl font-semibold text-ink">
+              Places to stay
+            </h2>
+          )}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {stayVillages.map((v) => {
+              const prices = v.homestays.map((h) => Number(h.price_per_night));
+              const minPrice = prices.length ? Math.min(...prices) : null;
+              return (
+                <Link
+                  key={v.id}
+                  href={`/villages/${v.id}`}
+                  className="group flex flex-col overflow-hidden rounded-xl border border-line bg-card transition-colors hover:border-clay"
+                >
+                  <div
+                    className="relative aspect-[4/3] bg-palm"
+                    style={
+                      v.hero_image_url
+                        ? { backgroundImage: `url(${v.hero_image_url})`, backgroundSize: "cover", backgroundPosition: "center" }
+                        : undefined
+                    }
+                  >
+                    <span className="absolute left-3 top-3 rounded-full bg-ink/60 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-paper">
+                      Stay
+                    </span>
+                    <span className="absolute right-3 top-3 rounded-full bg-gold px-2.5 py-1 text-xs font-semibold text-palm-deep">
+                      ★ {v.sanitation_rating}/5
+                    </span>
+                  </div>
+                  <div className="flex flex-1 flex-col p-5">
+                    <h3 className="font-display text-xl font-semibold text-ink group-hover:text-clay">
+                      {v.name}
+                    </h3>
+                    {v.region && <p className="text-sm text-muted-foreground">{v.region}</p>}
+                    {v.description && (
+                      <p className="mt-2 line-clamp-2 text-sm text-ink/70">{v.description}</p>
+                    )}
+                    <div className="mt-auto flex items-end justify-between pt-4">
+                      <span className="text-sm text-muted-foreground">
+                        {v.experiences.length} experience{v.experiences.length === 1 ? "" : "s"}
+                      </span>
+                      {minPrice !== null && (
+                        <span className="font-mono text-sm text-ink">
+                          from {rupiah(minPrice)}<span className="text-muted-foreground"> /night</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ── Experiences ────────────────────────────────────────────── */}
+      {expList.length > 0 && (
+        <section className={stayVillages.length > 0 ? "mt-16" : "mt-12"}>
+          {filter === "all" && (
+            <h2 className="mb-6 font-display text-2xl font-semibold text-ink">
+              Things to do
+            </h2>
+          )}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {expList.map((e) => (
+              <Link
+                key={e.id}
+                href={`/experiences/${e.id}`}
+                className="group flex flex-col gap-3 rounded-xl border border-line bg-card p-5 transition-colors hover:border-palm"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <span className="rounded-full border border-line px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-palm">
+                    {CAT_LABELS[e.category ?? ""] ?? e.category ?? "Experience"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {e.villages?.name ?? ""}
+                  </span>
+                </div>
+                <h3 className="font-display text-xl font-semibold leading-tight text-ink group-hover:text-palm">
+                  {e.title}
+                </h3>
+                {e.description && (
+                  <p className="line-clamp-2 text-sm text-ink/70">{e.description}</p>
+                )}
+                <div className="mt-auto flex items-center justify-between border-t border-line pt-3">
+                  <span className="text-xs text-muted-foreground">
+                    {e.villages?.region ?? ""}
+                  </span>
+                  <span className="font-mono text-sm text-ink">
+                    {rupiah(Number(e.price_per_pax))}<span className="text-muted-foreground"> /pax</span>
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -17,13 +17,28 @@ export type SendResult = {
 /**
  * Normalise a phone number to the format Fonnte expects:
  * digits only, no leading +, Indonesian numbers get the 62 country code.
- * Examples:  +62 812-345-6789  →  6281234567890
- *            0812-345-6789     →  6281234567890
+ * Examples:  +62 812-345-6789  →  62812345678(9)
+ *            0812-345-6789     →  62812345678(9)
  *            +65 8123 4567     →  6581234567
+ *
+ * Special case: +62 0812-xxx-xxxx (country code + local with leading 0)
+ * Strip the country code prefix first, then re-add 62 to drop the 0.
  */
 function normalisePhone(raw: string): string {
   const digits = raw.replace(/\D/g, "");
-  if (digits.startsWith("0")) return "62" + digits.slice(1);
+
+  // Already has Indonesian country code — may still have a redundant leading 0
+  // after the 62 (e.g. "620812345678"). Strip the 0 in that case.
+  if (digits.startsWith("620")) {
+    return "62" + digits.slice(3);
+  }
+
+  // Local Indonesian format: leading 0, no country code.
+  if (digits.startsWith("0")) {
+    return "62" + digits.slice(1);
+  }
+
+  // International format already (62xxx, 65xxx, 1xxx, …): pass through.
   return digits;
 }
 

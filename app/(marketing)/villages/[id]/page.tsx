@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { BookingPanel } from "@/components/booking/booking-panel";
+import { ReviewList } from "@/components/booking/review-list";
 import { rupiah } from "@/lib/format";
 
 type Params = { params: Promise<{ id: string }> };
@@ -9,7 +10,7 @@ export default async function VillageDetailPage({ params }: Params) {
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
 
-  const { data } = await supabase
+  const { data: villageData } = await supabase
     .from("villages")
     .select(
       "id, name, region, description, hero_image_url, sanitation_rating, bumdes_bank_account, " +
@@ -19,11 +20,24 @@ export default async function VillageDetailPage({ params }: Params) {
     .eq("id", id)
     .single();
 
-  if (!data) notFound();
+  if (!villageData) notFound();
 
-  const village = data as unknown as VillageDetailRow;
+  const village = villageData as unknown as VillageDetailRow;
   const homestays = village.homestays ?? [];
   const experiences = village.experiences ?? [];
+
+  type ReviewRow = { id: string; tourist_name: string; rating: number; comment: string | null; created_at: string };
+
+  const { data: reviewsData } = await supabase
+    .from("reviews")
+    .select("id, tourist_name, rating, comment, created_at")
+    .in("homestay_id", homestays.length > 0 ? homestays.map((h) => h.id) : ["no-match"])
+    .order("created_at", { ascending: false });
+
+  const reviews = (reviewsData ?? []) as ReviewRow[];
+  const avgRating = reviews.length
+    ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
+    : null;
 
   return (
     <div>
@@ -99,6 +113,14 @@ export default async function VillageDetailPage({ params }: Params) {
                 ))}
               </ul>
             )}
+          </section>
+
+          {/* Homestay reviews */}
+          <section className="mt-12">
+            <h2 className="font-display text-2xl font-semibold text-ink">Reviews</h2>
+            <div className="mt-5">
+              <ReviewList reviews={reviews} avgRating={avgRating} />
+            </div>
           </section>
         </div>
 

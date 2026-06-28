@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { rupiah, nightsBetween } from "@/lib/format";
+import { ReviewForm } from "@/components/booking/review-form";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -57,6 +58,13 @@ export default async function BookingConfirmationPage({ params }: Params) {
   const booking = data as unknown as BookingRow;
   const homestay = booking.homestays;
   const village = homestay?.villages ?? null;
+
+  // Check if a review already exists for this booking.
+  const { data: existingReview } = await supabase
+    .from("reviews")
+    .select("id")
+    .eq("booking_id", id)
+    .single();
   const dist = Array.isArray(booking.distributions)
     ? booking.distributions[0]
     : booking.distributions;
@@ -144,6 +152,24 @@ export default async function BookingConfirmationPage({ params }: Params) {
               </div>
             ))}
           </dl>
+        </div>
+      )}
+
+      {/* Review section */}
+      {(booking.status === "confirmed" || booking.status === "completed") && (
+        <div className="mt-10">
+          {existingReview ? (
+            <div className="rounded-xl border border-palm/30 bg-palm/5 p-6">
+              <p className="font-display text-xl font-semibold text-palm">
+                Review submitted
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your review is live. Thank you for the feedback!
+              </p>
+            </div>
+          ) : (
+            <ReviewForm bookingId={id} />
+          )}
         </div>
       )}
 

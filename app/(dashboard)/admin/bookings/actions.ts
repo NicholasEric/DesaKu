@@ -7,6 +7,7 @@ import { nightsBetween } from "@/lib/format";
 import {
   buildHostMessage,
   buildGuideMessage,
+  buildGuestMessage,
   type WhatsAppPayload,
 } from "@/lib/whatsapp";
 import { sendWhatsApp } from "@/lib/fonnte";
@@ -54,25 +55,48 @@ export async function confirmBooking(bookingId: string): Promise<ConfirmResult> 
   const homestay = booking.homestays;
   const village = homestay?.villages;
 
-  if (!homestay || !village) {
-    return { ok: false, error: "Booking has no homestay — cannot confirm." };
+  // Get village name — for experience-only bookings, look it up via first experience.
+  let villageName = village?.name;
+  const expIds: string[] = booking.experience_ids ?? [];
+  if (!villageName && expIds.length > 0) {
+    const { data: firstExp } = await supabase
+      .from("experiences")
+      .select("villages(name)")
+      .eq("id", expIds[0])
+      .single();
+    villageName = (firstExp as unknown as { villages: { name: string } | null })?.villages?.name;
   }
+  villageName = villageName ?? "DesaKu";
 
   const ctx = {
     guestName: booking.guest_name ?? "Tamu",
     guestPhone: booking.guest_phone,
     checkIn: booking.check_in,
     checkOut: booking.check_out,
-    villageName: village.name,
+    villageName,
     nights: nightsBetween(booking.check_in, booking.check_out),
   };
 
-  const payloads: WhatsAppPayload[] = [
-    buildHostMessage({ ...ctx, hostWhatsapp: homestay.host_whatsapp_number }),
-  ];
+  const payloads: WhatsAppPayload[] = [];
+
+  // Host message only when there is a homestay.
+  if (homestay) {
+    payloads.push(buildHostMessage({ ...ctx, hostWhatsapp: homestay.host_whatsapp_number }));
+  }
+
+  // Guest confirmation — only if they provided a phone number.
+  if (booking.guest_phone) {
+    payloads.push(
+      buildGuestMessage({
+        ...ctx,
+        guestPhone: booking.guest_phone,
+        bookingId: bookingId,
+      }),
+    );
+  }
 
   // One guide message per booked experience.
-  const expIds: string[] = booking.experience_ids ?? [];
+  // expIds was declared above for the village name lookup.
   if (expIds.length > 0) {
     const { data: experiences } = await supabase
       .from("experiences")
@@ -124,6 +148,30 @@ export async function confirmBooking(bookingId: string): Promise<ConfirmResult> 
 
   revalidatePath("/admin/bookings");
   return { ok: true, logsWritten: logRows.length };
+}
+
+// ---------------------------------------------------------------------------
+// markComplete — flips a confirmed booking to 'completed' so reviews unlock
+// ---------------------------------------------------------------------------
+
+export type MarkCompleteResult = { ok: true } | { ok: false; error: string };
+
+export async function markComplete(bookingId: string): Promise<MarkCompleteResult> {
+  if (!(await isAdminAuthed())) {
+    return { ok: false, error: "Session expired. Unlock the admin again." };
+  }
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("bookings")
+    .update({ status: "completed" })
+    .eq("id", bookingId)
+    .in("status", ["confirmed"]); // only confirmed bookings can be marked complete
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/bookings");
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------------------
