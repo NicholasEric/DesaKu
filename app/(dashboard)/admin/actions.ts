@@ -92,5 +92,6 @@ export async function onboardVillage(
   }
 
   revalidatePath("/admin");
+  revalidatePath("/villages");
   return { ok: true, villageId: village.id, rating, homestays: rows.length };
 }
