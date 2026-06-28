@@ -42,7 +42,7 @@ export function SiteHeader() {
             asChild
             className="rounded-full bg-palm px-5 text-paper hover:bg-palm-deep"
           >
-            <a href="#villages-list">Find a village</a>
+            <Link href="/villages">Find a village</Link>
           </Button>
         </div>
       </div>

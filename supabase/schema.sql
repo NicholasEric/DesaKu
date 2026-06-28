@@ -107,9 +107,13 @@ create table if not exists experiences (
 -- foreign key on array elements; integrity is checked in the booking action.
 -- A booking_experiences junction table is the recommended production upgrade.
 -- -----------------------------------------------------------------------------
+-- tourist_id is nullable: the MVP supports guest checkout (no tourist auth
+-- yet), so guest_name / guest_phone carry the traveller's details instead.
 create table if not exists bookings (
   id              uuid primary key default gen_random_uuid(),
-  tourist_id      uuid not null references profiles (id) on delete restrict,
+  tourist_id      uuid references profiles (id) on delete restrict,
+  guest_name      text,
+  guest_phone     text,
   homestay_id     uuid not null references homestays (id) on delete restrict,
   experience_ids  uuid[] not null default '{}',
   check_in        date not null,

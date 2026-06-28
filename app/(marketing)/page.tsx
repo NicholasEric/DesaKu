@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ImpactModel } from "@/components/marketing/impact-model";
 
@@ -43,7 +44,7 @@ export default function MarketingPage() {
                 size="lg"
                 className="rounded-full bg-clay px-7 text-base text-paper hover:bg-clay/90"
               >
-                <a href="#villages-list">Find a village</a>
+                <Link href="/villages">Find a village</Link>
               </Button>
               <Button
                 asChild
