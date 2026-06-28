@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PhoneInput } from "@/components/ui/phone-input";
 
 function isoOffset(days: number) {
   const d = new Date();
@@ -233,8 +234,7 @@ export function BookingPanel({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="phone" className="text-ink">WhatsApp / phone</Label>
-          <Input id="phone" value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)}
-            placeholder="+65 8123 4567" />
+          <PhoneInput id="phone" value={guestPhone} onChange={setGuestPhone} placeholder="8123 4567" />
         </div>
       </div>
 

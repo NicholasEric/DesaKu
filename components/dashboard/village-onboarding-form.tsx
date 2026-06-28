@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PhoneInput } from "@/components/ui/phone-input";
 
 const AMENITIES = [
   { id: "private_bathroom", label: "Private bathroom" },
@@ -271,10 +272,10 @@ export function VillageOnboardingForm() {
 
               <div className="grid gap-5 sm:grid-cols-3">
                 <Field label="Host WhatsApp" hint="The concierge target.">
-                  <Input
+                  <PhoneInput
                     value={h.hostWhatsapp}
-                    onChange={(e) => updateHomestay(i, { hostWhatsapp: e.target.value })}
-                    placeholder="+62 812-3456-7890"
+                    onChange={(v) => updateHomestay(i, { hostWhatsapp: v })}
+                    placeholder="812 3456 7890"
                   />
                 </Field>
                 <Field label="Price / night (Rp)">

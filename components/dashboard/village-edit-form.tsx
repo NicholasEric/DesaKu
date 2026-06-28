@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PhoneInput } from "@/components/ui/phone-input";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -157,7 +158,7 @@ function HomestayForm({
     <div className="mt-2 rounded-lg border border-line bg-secondary p-4">
       <div className="grid gap-3 sm:grid-cols-3">
         <Field label="Host WhatsApp *">
-          <Input value={form.hostWhatsapp} onChange={field("hostWhatsapp")} placeholder="+62 812 …" />
+          <PhoneInput value={form.hostWhatsapp} onChange={(v) => setForm((p) => ({ ...p, hostWhatsapp: v }))} placeholder="812 3456 7890" />
         </Field>
         <Field label="Price / night (IDR)">
           <Input type="number" value={form.pricePerNight} onChange={field("pricePerNight")} placeholder="350000" />
@@ -325,7 +326,7 @@ function ExperienceForm({
           <Input type="number" value={form.pricePerPax} onChange={field("pricePerPax")} placeholder="150000" />
         </Field>
         <Field label="Guide WhatsApp *">
-          <Input value={form.guideWhatsapp} onChange={field("guideWhatsapp")} placeholder="+62 812 …" />
+          <PhoneInput value={form.guideWhatsapp} onChange={(v) => setForm((p) => ({ ...p, guideWhatsapp: v }))} placeholder="812 3456 7890" />
         </Field>
       </div>
       {error && <p className="mt-2 text-sm text-clay">{error}</p>}

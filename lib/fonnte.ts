@@ -2,10 +2,12 @@
  * Fonnte WhatsApp transport.
  * Docs: https://fonnte.com/docs
  *
- * One function: sendWhatsApp(phone, message) → { ok, status }
- * Called by the confirmBooking server action for each recipient.
- * The caller writes the result into whatsapp_logs regardless of success/failure
- * so every attempt is auditable.
+ * Fonnte API expects:
+ *   target      — national number only (no country code prefix)
+ *   countryCode — the country dialling code (e.g. "62", "81", "880")
+ *
+ * Without countryCode Fonnte defaults to "62" (Indonesia) and prepends it to
+ * every number, which breaks non-Indonesian recipients.
  */
 
 export type SendResult = {
@@ -14,32 +16,72 @@ export type SendResult = {
   error?: string;
 };
 
+type FonnteTarget = { national: string; countryCode: string };
+
 /**
- * Normalise a phone number to the format Fonnte expects:
- * digits only, no leading +, Indonesian numbers get the 62 country code.
- * Examples:  +62 812-345-6789  →  62812345678(9)
- *            0812-345-6789     →  62812345678(9)
- *            +65 8123 4567     →  6581234567
+ * Split a raw phone number into a national number and country code for Fonnte.
  *
- * Special case: +62 0812-xxx-xxxx (country code + local with leading 0)
- * Strip the country code prefix first, then re-add 62 to drop the 0.
+ * Supports:
+ *   "+62 812-345-6789"  → { national: "8123456789", countryCode: "62" }
+ *   "0812-345-6789"     → { national: "8123456789", countryCode: "62" }
+ *   "+81 80-7644-9140"  → { national: "8076449140", countryCode: "81"  }
+ *   "+880 1924769118"   → { national: "1924769118", countryCode: "880" }
+ *   "+65 8123 4567"     → { national: "81234567",   countryCode: "65"  }
  */
-function normalisePhone(raw: string): string {
+function parseFonnteTarget(raw: string): FonnteTarget {
   const digits = raw.replace(/\D/g, "");
 
-  // Already has Indonesian country code — may still have a redundant leading 0
-  // after the 62 (e.g. "620812345678"). Strip the 0 in that case.
-  if (digits.startsWith("620")) {
-    return "62" + digits.slice(3);
-  }
-
-  // Local Indonesian format: leading 0, no country code.
+  // Local format with leading 0 → default to Indonesian
   if (digits.startsWith("0")) {
-    return "62" + digits.slice(1);
+    return { national: digits.slice(1), countryCode: "62" };
   }
 
-  // International format already (62xxx, 65xxx, 1xxx, …): pass through.
-  return digits;
+  // Sorted longest-first so 3-digit codes (880, 852 …) match before
+  // their 2-digit prefixes (88, 85 …).
+  const CODES = [
+    "880", // Bangladesh
+    "852", // Hong Kong
+    "853", // Macau
+    "855", // Cambodia
+    "856", // Laos
+    "886", // Taiwan
+    "960", // Maldives
+    "966", // Saudi Arabia
+    "971", // UAE
+    "972", // Israel
+    "62",  // Indonesia
+    "60",  // Malaysia
+    "61",  // Australia
+    "63",  // Philippines
+    "64",  // New Zealand
+    "65",  // Singapore
+    "66",  // Thailand
+    "81",  // Japan
+    "82",  // South Korea
+    "84",  // Vietnam
+    "86",  // China
+    "91",  // India
+    "92",  // Pakistan
+    "94",  // Sri Lanka
+    "95",  // Myanmar
+    "44",  // UK
+    "33",  // France
+    "39",  // Italy
+    "49",  // Germany
+    "1",   // US / Canada (single digit — must be last)
+  ];
+
+  for (const cc of CODES) {
+    if (digits.startsWith(cc)) {
+      // Also strip a redundant leading 0 in the national part
+      // (e.g. someone typed "+62 0812…" by mistake)
+      const national = digits.slice(cc.length).replace(/^0/, "");
+      return { national, countryCode: cc };
+    }
+  }
+
+  // Fallback: treat as Indonesian local without the leading 0
+  return { national: digits, countryCode: "62" };
 }
 
 export async function sendWhatsApp(
@@ -51,8 +93,9 @@ export async function sendWhatsApp(
     return { ok: false, error: "FONNTE_TOKEN is not set." };
   }
 
-  const target = normalisePhone(phone);
-  if (target.length < 8) {
+  const { national, countryCode } = parseFonnteTarget(phone);
+
+  if (national.length < 7) {
     return { ok: false, error: `Invalid phone number: ${phone}` };
   }
 
@@ -63,7 +106,7 @@ export async function sendWhatsApp(
         Authorization: token,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ target, message }),
+      body: JSON.stringify({ target: national, message, countryCode }),
     });
 
     const json = (await res.json()) as { status: boolean; reason?: string };

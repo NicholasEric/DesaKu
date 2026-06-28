@@ -65,7 +65,7 @@ export default async function AdminBookingsPage() {
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Pending bookings need manual confirmation. Confirming fires the
-          WhatsApp Concierge mock and logs the payload below.
+          WhatsApp Concierge via Fonnte and logs the delivery status below.
         </p>
       </header>
 
@@ -214,8 +214,12 @@ export default async function AdminBookingsPage() {
                               <span className="rounded-sm bg-ink/10 px-1.5 py-0.5 font-mono text-muted-foreground">
                                 {log.message_template}
                               </span>
-                              <span className="rounded-full bg-palm/15 px-2 py-0.5 text-palm">
-                                {log.status} (mock)
+                              <span className={`rounded-full px-2 py-0.5 ${
+                                log.status === "sent"
+                                  ? "bg-palm/15 text-palm"
+                                  : "bg-clay/15 text-clay"
+                              }`}>
+                                {log.status}
                               </span>
                             </div>
                           </div>
