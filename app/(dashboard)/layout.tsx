@@ -24,14 +24,29 @@ export default async function DashboardLayout({
               Admin
             </span>
           </Link>
-          <form action={lockAdmin}>
-            <button
-              type="submit"
+
+          <nav className="flex items-center gap-6">
+            <Link
+              href="/admin"
               className="text-sm text-paper/70 transition-colors hover:text-gold"
             >
-              Lock
-            </button>
-          </form>
+              Onboard
+            </Link>
+            <Link
+              href="/admin/bookings"
+              className="text-sm text-paper/70 transition-colors hover:text-gold"
+            >
+              Bookings
+            </Link>
+            <form action={lockAdmin}>
+              <button
+                type="submit"
+                className="text-sm text-paper/70 transition-colors hover:text-gold"
+              >
+                Lock
+              </button>
+            </form>
+          </nav>
         </div>
       </header>
       <main className="flex-1">{children}</main>
